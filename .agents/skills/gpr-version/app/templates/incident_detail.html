@@ -1,0 +1,28 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Incident #{{ incident.id }} — {{ incident.title }}</h2>
+<p>
+  <span class="pill">severity: {{ incident.severity.value }}</span>
+  <span class="pill">status: {{ incident.status.value }}</span>
+</p>
+{% if incident.description %}
+<p class="muted">{{ incident.description }}</p>
+{% endif %}
+
+<article>
+  <h4>Přidat událost</h4>
+  <form method="post" action="/ui/incidents/{{ incident.id }}/events">
+    <label>Kind<input name="kind" value="note"></label>
+    <label>Message<textarea name="message" required></textarea></label>
+    <button type="submit">Add</button>
+  </form>
+</article>
+
+<h3>Timeline</h3>
+{% for e in events %}
+  <article>
+    <header><span class="muted">{{ e.created_at }}</span> <span class="pill">{{ e.kind }}</span></header>
+    <p>{{ e.message }}</p>
+  </article>
+{% endfor %}
+{% endblock %}

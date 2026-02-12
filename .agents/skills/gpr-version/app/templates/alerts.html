@@ -1,0 +1,46 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Alerts</h2>
+<p class="muted">Simulace alertů (Betterstack-like). Watcher umí z alertu vytvořit incident.</p>
+
+<section class="grid">
+  <article>
+    <h4>Nový alert</h4>
+    <form method="post" action="/ui/alerts/create">
+      <label>Name<input name="name" required></label>
+      <label>Message<textarea name="message"></textarea></label>
+      <label>Severity
+        <select name="severity">
+          <option value="low">low</option>
+          <option value="medium" selected>medium</option>
+          <option value="high">high</option>
+          <option value="critical">critical</option>
+        </select>
+      </label>
+      <label>Source<input name="source" value="manual"></label>
+      <button type="submit">Create alert</button>
+    </form>
+  </article>
+  <article>
+    <h4>Watcher</h4>
+    <pre><code>python scripts/watcher.py</code></pre>
+    <p class="muted">Polling DB: pokud přijde high/critical alert, otevře incident a zapíše audit.</p>
+  </article>
+</section>
+
+<table>
+  <thead><tr><th>ID</th><th>Name</th><th>Severity</th><th>Source</th><th>Fingerprint</th><th>Created</th></tr></thead>
+  <tbody>
+    {% for a in alerts %}
+      <tr>
+        <td>#{{ a.id }}</td>
+        <td>{{ a.name }}</td>
+        <td>{{ a.severity.value }}</td>
+        <td>{{ a.source }}</td>
+        <td><code>{{ a.fingerprint }}</code></td>
+        <td class="muted">{{ a.created_at }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

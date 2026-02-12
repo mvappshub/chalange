@@ -1,0 +1,44 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+<p class="muted">Jednoduchá analytika: počty karet, incidentů a alertů (demo-friendly).</p>
+
+<section class="grid">
+  <article>
+    <h4>Karty podle sloupců</h4>
+    <canvas id="cardsChart"></canvas>
+  </article>
+  <article>
+    <h4>Incidenty podle statusu</h4>
+    <canvas id="incChart"></canvas>
+  </article>
+  <article>
+    <h4>Alerty podle severity</h4>
+    <canvas id="alertChart"></canvas>
+  </article>
+</section>
+
+<script>
+  const listCounts = {{ list_counts | tojson }};
+  const incByStatus = {{ inc_by_status | tojson }};
+  const alertsBySeverity = {{ alerts_by_severity | tojson }};
+
+  new Chart(document.getElementById("cardsChart"), {
+    type: "bar",
+    data: { labels: listCounts.map(x=>x.name), datasets: [{ label: "cards", data: listCounts.map(x=>x.count) }] },
+    options: { responsive: true }
+  });
+
+  new Chart(document.getElementById("incChart"), {
+    type: "doughnut",
+    data: { labels: Object.keys(incByStatus), datasets: [{ label: "incidents", data: Object.values(incByStatus) }] },
+    options: { responsive: true }
+  });
+
+  new Chart(document.getElementById("alertChart"), {
+    type: "pie",
+    data: { labels: Object.keys(alertsBySeverity), datasets: [{ label: "alerts", data: Object.values(alertsBySeverity) }] },
+    options: { responsive: true }
+  });
+</script>
+{% endblock %}

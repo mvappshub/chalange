@@ -1,0 +1,18 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Backups</h2>
+<p class="muted">DR: zálohy DB jsou obyčejné soubory (snadné vysvětlení i laikům).</p>
+
+<article>
+  <h4>CLI</h4>
+  <pre><code>python scripts/backup.py
+python scripts/restore.py --file backups/opsboard_YYYYmmdd_HHMMSS.db</code></pre>
+</article>
+
+<h3>Existující zálohy</h3>
+<ul>
+  {% for f in files %}
+    <li><code>{{ f }}</code></li>
+  {% endfor %}
+</ul>
+{% endblock %}

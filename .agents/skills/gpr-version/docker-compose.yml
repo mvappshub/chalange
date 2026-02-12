@@ -1,0 +1,10 @@
+services:
+  opsboard:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./data/opsboard.db
+    volumes:
+      - ./data:/app/data
+      - ./backups:/app/backups

@@ -1,0 +1,20 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Audit log</h2>
+<p class="muted">Záznamy requestů a doménových událostí. Hodí se pro forenzní analýzu a DR.</p>
+<table>
+  <thead><tr><th>At</th><th>Actor</th><th>Action</th><th>Entity</th><th>Correlation</th><th>Details</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td class="muted">{{ r.at }}</td>
+      <td>{{ r.actor }}</td>
+      <td><code>{{ r.action }}</code></td>
+      <td>{{ r.entity_type }}:{{ r.entity_id }}</td>
+      <td class="muted"><code>{{ r.correlation_id }}</code></td>
+      <td class="muted" style="max-width:380px; overflow:auto;"><code>{{ r.details_json }}</code></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

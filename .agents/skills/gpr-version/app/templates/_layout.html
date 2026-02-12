@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title or "OpsBoard" }}</title>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css">
+  <style>
+    .kanban { display:flex; gap:16px; align-items:flex-start; overflow-x:auto; padding-bottom:12px;}
+    .col { min-width: 320px; max-width: 360px; background: #fafafa; border:1px solid #e6e6e6; border-radius:12px; padding:12px;}
+    .card { background:white; border:1px solid #e6e6e6; border-radius:10px; padding:10px; margin-bottom:10px; cursor:grab;}
+    .muted { color: #666; font-size: 0.9em;}
+    .topnav a { margin-right: 12px;}
+    .pill { display:inline-block; padding:3px 8px; border-radius:999px; border:1px solid #ddd; font-size: 0.85em;}
+  </style>
+</head>
+<body>
+<main class="container">
+  <nav class="topnav">
+    <a href="/ui">Board</a>
+    <a href="/ui/incidents">Incidents</a>
+    <a href="/ui/alerts">Alerts</a>
+    <a href="/ui/dashboard">Dashboard</a>
+    <a href="/ui/audit">Audit</a>
+    <a href="/ui/backup">Backups</a>
+    <span class="muted" style="float:right">/health, /metrics</span>
+  </nav>
+  <hr>
+  {% block content %}{% endblock %}
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>

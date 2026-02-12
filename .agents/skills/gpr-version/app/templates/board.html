@@ -1,0 +1,48 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>{{ board.name }}</h2>
+<p class="muted">Trello-like kanban + audit, incidenty a monitoring. Přetáhni kartu mezi sloupci.</p>
+
+<section class="grid">
+  <article>
+    <h4>Nová karta</h4>
+    <form method="post" action="/ui/cards/create">
+      <label>Title<input name="title" required></label>
+      <label>Description<textarea name="description"></textarea></label>
+      <label>List
+        <select name="list_id">
+          {% for lst, _ in lists %}
+            <option value="{{ lst.id }}">{{ lst.name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit">Create</button>
+    </form>
+  </article>
+  <article>
+    <h4>Tip pro demo</h4>
+    <ol>
+      <li>Vytvoř kartu “Fix alert storm”.</li>
+      <li>V Alerts vytvoř High/Critical alert.</li>
+      <li>Spusť watcher: <code>python scripts/watcher.py</code> → incident se otevře.</li>
+      <li>Spusť agent: <code>python scripts/agent.py summarize --incident-id 1</code></li>
+    </ol>
+  </article>
+</section>
+
+<div class="kanban">
+  {% for lst, cards in lists %}
+    <div class="col">
+      <h3>{{ lst.name }} <span class="pill">{{ cards|length }}</span></h3>
+      <div class="cardlist" data-list-id="{{ lst.id }}">
+        {% for c in cards %}
+          <div class="card" data-card-id="{{ c.id }}">
+            <strong>#{{ c.id }} {{ c.title }}</strong><br>
+            {% if c.description %}<span class="muted">{{ c.description }}</span>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

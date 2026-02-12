@@ -1,0 +1,44 @@
+{% extends "_layout.html" %}
+{% block content %}
+<h2>Incidents</h2>
+
+<section class="grid">
+  <article>
+    <h4>Nový incident</h4>
+    <form method="post" action="/ui/incidents/create">
+      <label>Title<input name="title" required></label>
+      <label>Description<textarea name="description"></textarea></label>
+      <label>Severity
+        <select name="severity">
+          <option value="low">low</option>
+          <option value="medium" selected>medium</option>
+          <option value="high">high</option>
+          <option value="critical">critical</option>
+        </select>
+      </label>
+      <button type="submit">Open incident</button>
+    </form>
+  </article>
+  <article>
+    <h4>AI triage</h4>
+    <p class="muted">CLI agent umí incident shrnout a navrhnout remediation úkoly (karty).</p>
+    <pre><code>python scripts/agent.py summarize --incident-id 1
+python scripts/agent.py propose-tasks --incident-id 1</code></pre>
+  </article>
+</section>
+
+<table>
+  <thead><tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+    {% for i in incidents %}
+      <tr>
+        <td>#{{ i.id }}</td>
+        <td>{{ i.title }}</td>
+        <td>{{ i.severity.value }}</td>
+        <td>{{ i.status.value }}</td>
+        <td><a href="/ui/incidents/{{ i.id }}">Detail</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
