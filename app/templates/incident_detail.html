@@ -1,22 +1,41 @@
 {% extends "base.html" %}
+{% block title %}Incident Detail | {{ app_name }}{% endblock %}
+{% block page_title %}Incident Detail{% endblock %}
+{% block page_subtitle %}Live incident workspace for AI triage, remediation planning, and timeline review.{% endblock %}
 {% block content %}
 <section class="panel">
-  <h2>{{ incident.title }}</h2>
-  <p><strong>Status:</strong> {{ incident.status }} | <strong>Severity:</strong> {{ incident.severity }}</p>
-  <p>{{ incident.summary }}</p>
-  <form method="post" action="/incidents/{{ incident.id }}/status">
-    <select name="status">
-      <option value="investigating">investigating</option>
-      <option value="mitigated">mitigated</option>
-      <option value="resolved">resolved</option>
-    </select>
-    <button type="submit">Update status</button>
+  <div class="panel-header">
+    <div>
+      <h2>{{ incident.title }}</h2>
+      <p class="mono muted">Incident ID: {{ incident.id }}</p>
+    </div>
+    <div class="button-row">
+      <span class="badge status-{{ incident.status|lower }}">{{ incident.status }}</span>
+      <span class="badge severity-{{ incident.severity|lower }}">{{ incident.severity }}</span>
+    </div>
+  </div>
+  <div class="text-block">
+    <strong>Summary</strong>
+    <p>{{ incident.summary }}</p>
+  </div>
+  <form method="post" action="/incidents/{{ incident.id }}/status" style="margin-top: 16px;">
+    <label>
+      Update status
+      <select name="status">
+        <option value="investigating">investigating</option>
+        <option value="mitigated">mitigated</option>
+        <option value="resolved">resolved</option>
+      </select>
+    </label>
+    <button type="submit" class="button button-secondary">Update status</button>
   </form>
 </section>
+
 <section class="panel">
-  <h3>AI actions</h3>
+  <h3>AI Actions</h3>
   <div class="button-row">
     <button
+      class="button button-primary"
       hx-post="/api/agent/run?incident_id={{ incident.id }}&mode=triage"
       hx-swap="none"
       hx-on::after-request="window.location.reload()"
@@ -24,6 +43,7 @@
       Run AI triage
     </button>
     <button
+      class="button button-secondary"
       hx-post="/api/agent/run?incident_id={{ incident.id }}&mode=plan"
       hx-swap="none"
       hx-on::after-request="window.location.reload()"
@@ -31,27 +51,39 @@
       Propose tasks
     </button>
   </div>
+
   {% if triage_note %}
-  <p><strong>Latest triage:</strong> {{ triage_note.content }}</p>
+  <div class="text-block">
+    <strong>Latest triage note</strong>
+    <p>{{ triage_note.content }}</p>
+  </div>
   {% else %}
   <p class="muted">No triage note yet.</p>
   {% endif %}
-  <h4>Remediation cards</h4>
-  <ul>
+
+  <h4 style="margin-top: 16px;">Remediation Cards</h4>
+  <ul class="list">
     {% for card in remediation_cards %}
-    <li>{{ card.title }}</li>
+    <li><span class="mono">{{ card.id }}</span> - {{ card.title }}</li>
     {% else %}
-    <li>No AI remediation cards yet</li>
+    <li class="muted">No AI remediation cards yet</li>
     {% endfor %}
   </ul>
 </section>
+
 <section class="panel">
-  <h3>Timeline (audit)</h3>
-  <ul>
+  <h3>Timeline (Audit)</h3>
+  <ul class="timeline">
     {% for event in timeline %}
-    <li>{{ event.created_at }} | {{ event.action }} | {{ event.payload }}</li>
+    <li class="timeline-item">
+      <div class="timeline-head">
+        <span class="mono">{{ event.created_at }}</span>
+        <span class="badge status-neutral">{{ event.action }}</span>
+      </div>
+      <pre class="code-block">{{ event.payload | tojson(indent=2) }}</pre>
+    </li>
     {% else %}
-    <li>No events</li>
+    <li class="muted">No events</li>
     {% endfor %}
   </ul>
 </section>

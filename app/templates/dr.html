@@ -1,15 +1,34 @@
 {% extends "base.html" %}
+{% block title %}DR | {{ app_name }}{% endblock %}
+{% block page_title %}Disaster Recovery{% endblock %}
+{% block page_subtitle %}Export snapshots and controlled restore flow for application-level recovery.{% endblock %}
 {% block content %}
 <section class="panel">
-  <h2>Disaster recovery (application level)</h2>
-  <p>Export/import board, alerts, incidents and audit events as JSON.</p>
-  <a class="button" href="/dr/export">Export JSON backup</a>
+  <h2>Backup Export</h2>
+  <p class="muted">Export board, alerts, incidents, and audit events as a JSON backup package.</p>
+  <a class="button button-primary" href="/dr/export">Export JSON backup</a>
 </section>
-<section class="panel">
-  <h3>Restore</h3>
+
+<section class="panel danger-zone">
+  <h3>Danger Zone: Restore</h3>
+  <p class="danger-text">Warning: restore overwrites current data. Use only with a validated backup.</p>
+  {% if restored %}
+  <div class="callout">
+    <p><strong>Restore applied.</strong> Check <a href="/audit?action=restore_applied">audit restore_applied</a>.</p>
+  </div>
+  {% endif %}
   <form method="post" action="/dr/import" enctype="multipart/form-data">
-    <input type="file" name="file" accept="application/json" required>
-    <button type="submit">Import backup</button>
+    <label>
+      Backup file
+      <input type="file" name="file" accept="application/json" required>
+    </label>
+    <button
+      type="submit"
+      class="button button-danger"
+      onclick="return confirm('Restore will overwrite current data. Continue?')"
+    >
+      Import backup
+    </button>
   </form>
 </section>
 {% endblock %}

@@ -1,38 +1,63 @@
 {% extends "base.html" %}
+{% block title %}Board | {{ app_name }}{% endblock %}
+{% block page_title %}Board{% endblock %}
+{% block page_subtitle %}Operational kanban for tasks, incidents, and remediation execution states.{% endblock %}
 {% block content %}
 <section class="panel">
-  <h2>Create card</h2>
+  <h2>Create Card</h2>
   <form method="post" action="/cards">
-    <input type="text" name="title" placeholder="Card title" required>
-    <input type="text" name="description" placeholder="Description">
-    <select name="column_name">
-      <option>Todo</option>
-      <option>In Progress</option>
-      <option>Done</option>
-    </select>
-    <button type="submit">Add card</button>
+    <label>
+      Title
+      <input type="text" name="title" placeholder="Card title" required>
+    </label>
+    <label>
+      Description
+      <input type="text" name="description" placeholder="Description">
+    </label>
+    <label>
+      Column
+      <select name="column_name">
+        <option>Todo</option>
+        <option>In Progress</option>
+        <option>Done</option>
+        <option>Remediation</option>
+      </select>
+    </label>
+    <button type="submit" class="button button-primary">Add card</button>
   </form>
 </section>
 
-<section class="columns">
-  {% for column_name, items in columns.items() %}
-  <article class="column">
-    <h3>{{ column_name }}</h3>
+<section class="kanban-grid">
+  {% for column_name in ["Todo", "In Progress", "Done", "Remediation"] %}
+  {% set items = columns.get(column_name, []) %}
+  <article class="kanban-column">
+    <div class="column-head">
+      <h3>{{ column_name }}</h3>
+      <span class="badge status-neutral">{{ items|length }}</span>
+    </div>
     {% for card in items %}
-    <div class="card">
-      <strong>{{ card.title }}</strong>
+    <div class="task-card">
+      <div class="task-head">
+        <strong>{{ card.title }}</strong>
+        <span class="mono muted">{{ card.id }}</span>
+      </div>
+      {% if card.description %}
       <p>{{ card.description }}</p>
-      <form method="post" action="/cards/{{ card.id }}/move">
-        <select name="column_name">
-          <option {% if column_name == "Todo" %}selected{% endif %}>Todo</option>
-          <option {% if column_name == "In Progress" %}selected{% endif %}>In Progress</option>
-          <option {% if column_name == "Done" %}selected{% endif %}>Done</option>
-        </select>
-        <button type="submit">Move</button>
-      </form>
-      <form method="post" action="/cards/{{ card.id }}/delete">
-        <button type="submit" class="danger">Delete</button>
-      </form>
+      {% endif %}
+      <div class="card-actions">
+        <form class="inline-form" method="post" action="/cards/{{ card.id }}/move">
+          <select name="column_name">
+            <option {% if column_name == "Todo" %}selected{% endif %}>Todo</option>
+            <option {% if column_name == "In Progress" %}selected{% endif %}>In Progress</option>
+            <option {% if column_name == "Done" %}selected{% endif %}>Done</option>
+            <option {% if column_name == "Remediation" %}selected{% endif %}>Remediation</option>
+          </select>
+          <button type="submit" class="button button-ghost button-sm">Move</button>
+        </form>
+        <form class="inline-form" method="post" action="/cards/{{ card.id }}/delete">
+          <button type="submit" class="button button-danger button-sm">Delete</button>
+        </form>
+      </div>
     </div>
     {% else %}
     <p class="muted">No cards</p>

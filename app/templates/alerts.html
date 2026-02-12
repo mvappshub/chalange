@@ -1,41 +1,82 @@
 {% extends "base.html" %}
+{% block title %}Alerts | {{ app_name }}{% endblock %}
+{% block page_title %}Alerts{% endblock %}
+{% block page_subtitle %}Generate, escalate, and track alert lifecycles without leaving the response flow.{% endblock %}
 {% block content %}
 <section class="panel">
-  <h2>Create alert</h2>
+  <div class="panel-header">
+    <div>
+      <h2>Create Alert</h2>
+      <p class="muted">Manual alert entry for testing and operational workflows.</p>
+    </div>
+    <form method="post" action="/alerts/demo-high">
+      <button type="submit" class="button button-primary">Create HIGH demo alert</button>
+    </form>
+  </div>
   <form method="post" action="/alerts">
-    <input type="text" name="title" placeholder="Alert title" required>
-    <select name="severity">
-      <option value="low">low</option>
-      <option value="medium">medium</option>
-      <option value="high">high</option>
-      <option value="critical">critical</option>
-    </select>
-    <input type="text" name="source" value="manual">
-    <button type="submit">Create alert</button>
+    <label>
+      Title
+      <input type="text" name="title" placeholder="Alert title" required>
+    </label>
+    <label>
+      Severity
+      <select name="severity">
+        <option value="low">low</option>
+        <option value="medium">medium</option>
+        <option value="high">high</option>
+        <option value="critical">critical</option>
+      </select>
+    </label>
+    <label>
+      Source
+      <input type="text" name="source" value="manual">
+    </label>
+    <button type="submit" class="button button-secondary">Create alert</button>
   </form>
 </section>
+
 <section class="panel">
-  <h2>Watcher</h2>
+  <h2>Escalation</h2>
+  <p class="muted">Only HIGH and CRITICAL alerts are escalated to incidents by the watcher.</p>
   <form method="post" action="/watcher/run-once">
-    <button type="submit">Run escalation once</button>
+    <button type="submit" class="button">Run escalation once</button>
   </form>
+  {% if created_incidents is not none %}
+  <div class="callout">
+    <p><strong>Watcher run complete.</strong> created_incidents={{ created_incidents }}</p>
+    {% if incident_id %}
+      <p><a class="button button-secondary button-sm" href="/incidents/{{ incident_id }}">Open created incident</a></p>
+    {% endif %}
+  </div>
+  {% endif %}
 </section>
+
 <section class="panel">
   <h2>Alerts</h2>
-  <table>
-    <thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>Escalated</th></tr></thead>
-    <tbody>
-    {% for alert in alerts %}
-    <tr>
-      <td>{{ alert.title }}</td>
-      <td>{{ alert.severity }}</td>
-      <td>{{ alert.status }}</td>
-      <td>{{ alert.escalated }}</td>
-    </tr>
-    {% else %}
-    <tr><td colspan="4">No alerts yet</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Severity</th><th>Status</th><th>Escalated</th></tr>
+      </thead>
+      <tbody>
+      {% for alert in alerts %}
+      <tr>
+        <td>{{ alert.title }}</td>
+        <td><span class="badge severity-{{ alert.severity|lower }}">{{ alert.severity }}</span></td>
+        <td><span class="badge status-{{ alert.status|lower }}">{{ alert.status }}</span></td>
+        <td>
+          {% if alert.escalated %}
+          <span class="badge severity-low">yes</span>
+          {% else %}
+          <span class="badge status-neutral">no</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="muted">No alerts yet</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}

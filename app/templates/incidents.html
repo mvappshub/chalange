@@ -1,21 +1,28 @@
 {% extends "base.html" %}
+{% block title %}Incidents | {{ app_name }}{% endblock %}
+{% block page_title %}Incidents{% endblock %}
+{% block page_subtitle %}Incident queue with severity and status context for triage and mitigation.{% endblock %}
 {% block content %}
 <section class="panel">
-  <h2>Incidents</h2>
-  <table>
-    <thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>Created</th></tr></thead>
-    <tbody>
-      {% for incident in incidents %}
-      <tr>
-        <td><a href="/incidents/{{ incident.id }}">{{ incident.title }}</a></td>
-        <td>{{ incident.severity }}</td>
-        <td>{{ incident.status }}</td>
-        <td>{{ incident.created_at }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4">No incidents yet</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <h2>Incident Queue</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Title</th><th>Severity</th><th>Status</th><th>Created</th></tr>
+      </thead>
+      <tbody>
+        {% for incident in incidents %}
+        <tr>
+          <td><a href="/incidents/{{ incident.id }}">{{ incident.title }}</a></td>
+          <td><span class="badge severity-{{ incident.severity|lower }}">{{ incident.severity }}</span></td>
+          <td><span class="badge status-{{ incident.status|lower }}">{{ incident.status }}</span></td>
+          <td class="mono">{{ incident.created_at }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="muted">No incidents yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </section>
 {% endblock %}

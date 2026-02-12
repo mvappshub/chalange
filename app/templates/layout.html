@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <a class="brand" href="/board">{{ app_name }}</a>
+      <nav class="top-nav" aria-label="Primary">
+        <a class="nav-link {% if request.url.path.startswith('/board') %}is-active{% endif %}" href="/board">Board</a>
+        <a class="nav-link {% if request.url.path.startswith('/alerts') %}is-active{% endif %}" href="/alerts">Alerts</a>
+        <a class="nav-link {% if request.url.path.startswith('/incidents') %}is-active{% endif %}" href="/incidents">Incidents</a>
+        <a class="nav-link {% if request.url.path.startswith('/audit') %}is-active{% endif %}" href="/audit">Audit</a>
+        <a class="nav-link {% if request.url.path.startswith('/monitoring') %}is-active{% endif %}" href="/monitoring">Monitoring</a>
+        <a class="nav-link {% if request.url.path.startswith('/dr') %}is-active{% endif %}" href="/dr">DR</a>
+        <a class="nav-link {% if request.url.path.startswith('/metrics') %}is-active{% endif %}" href="/metrics">Metrics</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main-shell">
+    <header class="page-header">
+      <p class="eyebrow">OpsBoard Control Plane</p>
+      <h1>{% block page_title %}{{ app_name }}{% endblock %}</h1>
+      <p class="subtitle">{% block page_subtitle %}Real-time incident response and operational visibility.{% endblock %}</p>
+    </header>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
