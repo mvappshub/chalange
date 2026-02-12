@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import io
 import json
+import os
 from typing import Any
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -32,6 +33,21 @@ def split_cards(cards: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
     for card in cards:
         columns.setdefault(card["column_name"], []).append(card)
     return columns
+
+
+def summarize_audit_payload(event: dict[str, Any]) -> str:
+    payload = event.get("payload") or {}
+    if event.get("action") == "agent_ran":
+        return (
+            f"llm_used={payload.get('llm_used')} | "
+            f"tasks={payload.get('tasks_count', 0)} | "
+            f"thinking={payload.get('thinking_level', '-')}"
+        )
+    if event.get("action") == "watcher_run":
+        return f"created_incidents={payload.get('created_incidents', 0)}"
+    if event.get("action") == "restore_applied":
+        return f"tables={len(payload.get('tables', []))}"
+    return "-"
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -86,8 +102,18 @@ def delete_card(card_id: str, db: DataAccess = Depends(get_data_access)):
 
 @app.get("/alerts", response_class=HTMLResponse)
 def alerts_page(request: Request, db: DataAccess = Depends(get_data_access)):
+    created = request.query_params.get("created_incidents")
+    incident_id = request.query_params.get("incident_id")
     return templates.TemplateResponse(
-        request, "alerts.html", {"request": request, "alerts": db.list_alerts(), "app_name": get_settings().app_name}
+        request,
+        "alerts.html",
+        {
+            "request": request,
+            "alerts": db.list_alerts(),
+            "created_incidents": created,
+            "incident_id": incident_id,
+            "app_name": get_settings().app_name,
+        },
     )
 
 
@@ -104,15 +130,27 @@ def create_alert(
     return RedirectResponse("/alerts", status_code=303)
 
 
+@app.post("/alerts/demo-high")
+def create_demo_high_alert(db: DataAccess = Depends(get_data_access)):
+    db.create_alert(title="Demo HIGH: API latency spike", severity="high", source="demo")
+    return RedirectResponse("/alerts", status_code=303)
+
+
 @app.post("/watcher/run-once")
 def run_watcher_once(request: Request, db: DataAccess = Depends(get_data_access)):
     created = 0
+    incident_ids: list[str] = []
     for alert in db.list_unescalated_high_alerts():
-        db.create_incident_from_alert(alert)
+        incident = db.create_incident_from_alert(alert)
+        incident_ids.append(incident["id"])
         created += 1
     db.create_audit_event("watcher_run", "system", "watcher", {"created_incidents": created})
     log_event("domain_event", request_id=request.state.request_id, action="watcher_run", created=created)
-    return RedirectResponse("/incidents", status_code=303)
+    first_incident = incident_ids[0] if incident_ids else ""
+    return RedirectResponse(
+        f"/alerts?created_incidents={created}&incident_id={first_incident}",
+        status_code=303,
+    )
 
 
 @app.get("/incidents", response_class=HTMLResponse)
@@ -156,6 +194,11 @@ def incident_update_status(incident_id: str, status: str = Form(...), db: DataAc
 @app.get("/audit", response_class=HTMLResponse)
 def audit_page(request: Request, db: DataAccess = Depends(get_data_access)):
     events = db.list_audit_events()
+    action_filter = request.query_params.get("action")
+    if action_filter:
+        events = [event for event in events if event.get("action") == action_filter]
+    for event in events:
+        event["payload_summary"] = summarize_audit_payload(event)
     return templates.TemplateResponse(
         request, "audit.html", {"request": request, "events": events, "app_name": get_settings().app_name}
     )
@@ -164,10 +207,18 @@ def audit_page(request: Request, db: DataAccess = Depends(get_data_access)):
 @app.get("/monitoring", response_class=HTMLResponse)
 def monitoring_page(request: Request, db: DataAccess = Depends(get_data_access)):
     counts = db.counts()
+    watcher = db.latest_event_by_action("watcher_run")
+    status = {
+        "api_ok": True,
+        "db_ok": True,
+        "watcher_last_run_at": watcher["created_at"] if watcher else None,
+        "watcher_created_incidents": (watcher or {}).get("payload", {}).get("created_incidents", 0),
+        "ai_gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
+    }
     return templates.TemplateResponse(
         request,
         "monitoring.html",
-        {"request": request, "counts": counts, "metrics": metrics, "app_name": get_settings().app_name},
+        {"request": request, "counts": counts, "metrics": metrics, "status": status, "app_name": get_settings().app_name},
     )
 
 
@@ -175,6 +226,23 @@ def monitoring_page(request: Request, db: DataAccess = Depends(get_data_access))
 def health(db: DataAccess = Depends(get_data_access)):
     db.counts()
     return {"status": "ok", "time": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get("/api/status")
+def api_status(db: DataAccess = Depends(get_data_access)):
+    db_ok = True
+    try:
+        db.counts()
+    except Exception:
+        db_ok = False
+    watcher = db.latest_event_by_action("watcher_run") if db_ok else None
+    return {
+        "api_ok": True,
+        "db_ok": db_ok,
+        "watcher_last_run_at": watcher["created_at"] if watcher else None,
+        "watcher_created_incidents": (watcher or {}).get("payload", {}).get("created_incidents", 0),
+        "ai_gemini_key_present": bool(os.getenv("GEMINI_API_KEY")),
+    }
 
 
 @app.get("/metrics")
@@ -227,7 +295,12 @@ def agent_run_api(
 
 @app.get("/dr", response_class=HTMLResponse)
 def dr_page(request: Request):
-    return templates.TemplateResponse(request, "dr.html", {"request": request, "app_name": get_settings().app_name})
+    restored = request.query_params.get("restored") == "1"
+    return templates.TemplateResponse(
+        request,
+        "dr.html",
+        {"request": request, "restored": restored, "app_name": get_settings().app_name},
+    )
 
 
 @app.get("/dr/export")
@@ -246,8 +319,8 @@ async def dr_import(file: UploadFile = File(...), db: DataAccess = Depends(get_d
     raw = await file.read()
     payload = json.loads(raw.decode("utf-8"))
     db.import_all(payload)
-    db.create_audit_event("dr_import", "system", "backup", {"tables": list(payload.keys())})
-    return RedirectResponse("/monitoring", status_code=303)
+    db.create_audit_event("restore_applied", "system", "backup", {"tables": list(payload.keys())})
+    return RedirectResponse("/dr?restored=1", status_code=303)
 
 
 @app.get("/tools")
