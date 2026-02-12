@@ -35,6 +35,11 @@ form {
 input, select, button {
   padding: 0.4rem 0.6rem;
 }
+.button-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.7rem;
+}
 .button, button {
   background: #2563eb;
   color: #fff;

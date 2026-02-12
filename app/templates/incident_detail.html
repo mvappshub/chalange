@@ -14,6 +14,38 @@
   </form>
 </section>
 <section class="panel">
+  <h3>AI actions</h3>
+  <div class="button-row">
+    <button
+      hx-post="/api/agent/run?incident_id={{ incident.id }}&mode=triage"
+      hx-swap="none"
+      hx-on::after-request="window.location.reload()"
+    >
+      Run AI triage
+    </button>
+    <button
+      hx-post="/api/agent/run?incident_id={{ incident.id }}&mode=plan"
+      hx-swap="none"
+      hx-on::after-request="window.location.reload()"
+    >
+      Propose tasks
+    </button>
+  </div>
+  {% if triage_note %}
+  <p><strong>Latest triage:</strong> {{ triage_note.content }}</p>
+  {% else %}
+  <p class="muted">No triage note yet.</p>
+  {% endif %}
+  <h4>Remediation cards</h4>
+  <ul>
+    {% for card in remediation_cards %}
+    <li>{{ card.title }}</li>
+    {% else %}
+    <li>No AI remediation cards yet</li>
+    {% endfor %}
+  </ul>
+</section>
+<section class="panel">
   <h3>Timeline (audit)</h3>
   <ul>
     {% for event in timeline %}

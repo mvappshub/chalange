@@ -5,6 +5,7 @@ Migrations in this folder were applied through Supabase MCP SQL tools (`execute_
 Applied files:
 - `001_init.sql`
 - `002_indexes.sql`
+- `003_incident_notes.sql`
 
 Smoke verification after apply (via MCP):
 - listed tables in `public`

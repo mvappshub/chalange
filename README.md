@@ -32,6 +32,7 @@ DDL/migrace byly aplikovány přes Supabase MCP (viz `migrations/README.md`).
 ## Watcher + Agent
 - Eskalace alertů: `npm run watcher:once`
 - Agent (nastav `INCIDENT_ID`): `npm run agent:demo`
+- Server AI trigger: `POST /api/agent/run?incident_id=<uuid>&mode=triage|plan|both`
 
 ## Monitoring endpoints
 - `/health`
@@ -44,10 +45,12 @@ DDL/migrace byly aplikovány přes Supabase MCP (viz `migrations/README.md`).
 
 ## Vercel deploy
 1. `vercel --prod` (v připojeném projektu/repu)
-2. Nastav env vars:
+2. Ve Vercel dashboardu otevři `Project Settings -> Environment Variables` a nastav:
    - `SUPABASE_URL`
    - `SUPABASE_ANON_KEY`
-   - `LLM_API_KEY` (volitelné)
+   - `GEMINI_API_KEY` (pro LLM větev)
+   - `GEMINI_MODEL=gemini-3-flash-preview`
+   - `GEMINI_THINKING_LEVEL=minimal`
 3. Ověř:
    - `/health`
    - `/board`

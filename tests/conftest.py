@@ -14,6 +14,7 @@ class FakeDataAccess:
         self.alerts = []
         self.incidents = []
         self.audit_events = []
+        self.incident_notes = []
 
     def _now(self):
         return datetime.now(timezone.utc).isoformat()
@@ -87,6 +88,31 @@ class FakeDataAccess:
         self.mark_alert_escalated(alert["id"])
         return row
 
+    def upsert_incident_note(self, incident_id, note_type, content):
+        for note in self.incident_notes:
+            if note["incident_id"] == incident_id and note["note_type"] == note_type:
+                note["content"] = content
+                note["updated_at"] = self._now()
+                return note
+        note = {
+            "id": str(uuid.uuid4()),
+            "incident_id": incident_id,
+            "note_type": note_type,
+            "content": content,
+            "created_at": self._now(),
+            "updated_at": self._now(),
+        }
+        self.incident_notes.append(note)
+        return note
+
+    def list_incident_notes(self, incident_id):
+        notes = [n for n in self.incident_notes if n["incident_id"] == incident_id]
+        return sorted(notes, key=lambda x: x["updated_at"], reverse=True)
+
+    def list_agent_cards_for_incident(self, incident_id):
+        needle = f"incident {incident_id}"
+        return [c for c in self.cards if needle in (c.get("description") or "")]
+
     def update_incident_status(self, incident_id, status):
         for i in self.incidents:
             if i["id"] == incident_id:
@@ -117,6 +143,7 @@ class FakeDataAccess:
             "alerts": len(self.alerts),
             "incidents": len(self.incidents),
             "audit_events": len(self.audit_events),
+            "incident_notes": len(self.incident_notes),
         }
 
     def export_all(self):
@@ -125,6 +152,7 @@ class FakeDataAccess:
             "alerts": self.alerts,
             "incidents": self.incidents,
             "audit_events": self.audit_events,
+            "incident_notes": self.incident_notes,
         }
 
     def import_all(self, payload):
@@ -132,6 +160,7 @@ class FakeDataAccess:
         self.alerts = payload.get("alerts", [])
         self.incidents = payload.get("incidents", [])
         self.audit_events = payload.get("audit_events", [])
+        self.incident_notes = payload.get("incident_notes", [])
 
 
 @pytest.fixture()

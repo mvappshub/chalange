@@ -7,7 +7,7 @@ OpsBoard je jednoduchý provozní nástroj pro malé týmy. Spojuje:
 - audit log,
 - monitoring (`/health`, `/metrics`),
 - základní disaster recovery (export/import JSON),
-- AI asistenta pro návrh remediation tasků.
+- AI asistenta (Gemini) pro triage i remediation tasky s auditovaným `llm_used` flagem.
 
 ## Proč
 V challenge čase potřebujeme rychle funkční řešení, které jde snadno vysvětlit i laikovi:

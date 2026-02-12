@@ -113,6 +113,50 @@ class DataAccess:
         self.client.table("incidents").update({"status": status, "updated_at": self._now()}).eq("id", incident_id).execute()
         self.create_audit_event("incident_status_changed", "incident", incident_id, {"status": status})
 
+    def upsert_incident_note(self, incident_id: str, note_type: str, content: str) -> dict[str, Any]:
+        existing = (
+            self.client.table("incident_notes")
+            .select("*")
+            .eq("incident_id", incident_id)
+            .eq("note_type", note_type)
+            .limit(1)
+            .execute()
+            .data
+        )
+        if existing:
+            updated = (
+                self.client.table("incident_notes")
+                .update({"content": content, "updated_at": self._now()})
+                .eq("id", existing[0]["id"])
+                .execute()
+                .data[0]
+            )
+            return updated
+        row = {
+            "id": str(uuid4()),
+            "incident_id": incident_id,
+            "note_type": note_type,
+            "content": content,
+            "created_at": self._now(),
+            "updated_at": self._now(),
+        }
+        return self.client.table("incident_notes").insert(row).execute().data[0]
+
+    def list_incident_notes(self, incident_id: str) -> list[dict[str, Any]]:
+        response = (
+            self.client.table("incident_notes")
+            .select("*")
+            .eq("incident_id", incident_id)
+            .order("updated_at", desc=True)
+            .execute()
+        )
+        return response.data or []
+
+    def list_agent_cards_for_incident(self, incident_id: str) -> list[dict[str, Any]]:
+        cards = self.list_cards()
+        needle = f"incident {incident_id}"
+        return [card for card in cards if needle in (card.get("description") or "")]
+
     def create_audit_event(self, action: str, entity_type: str, entity_id: str, payload: dict[str, Any]) -> None:
         row = {
             "id": str(uuid4()),
@@ -133,7 +177,7 @@ class DataAccess:
         return response.data or []
 
     def counts(self) -> dict[str, int]:
-        tables = ["cards", "alerts", "incidents", "audit_events"]
+        tables = ["cards", "alerts", "incidents", "audit_events", "incident_notes"]
         out: dict[str, int] = {}
         for table in tables:
             count = self.client.table(table).select("id", count="exact").limit(0).execute().count or 0
@@ -146,10 +190,11 @@ class DataAccess:
             "alerts": self.client.table("alerts").select("*").execute().data or [],
             "incidents": self.client.table("incidents").select("*").execute().data or [],
             "audit_events": self.client.table("audit_events").select("*").execute().data or [],
+            "incident_notes": self.client.table("incident_notes").select("*").execute().data or [],
         }
 
     def import_all(self, payload: dict[str, Any]) -> None:
-        for table in ["cards", "alerts", "incidents", "audit_events"]:
+        for table in ["cards", "alerts", "incidents", "audit_events", "incident_notes"]:
             self.client.table(table).delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
             rows = payload.get(table, [])
             if rows:

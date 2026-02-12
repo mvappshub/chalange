@@ -13,6 +13,7 @@ from fastapi.templating import Jinja2Templates
 from app.config import get_settings
 from app.db import DataAccess, build_data_access
 from app.obs import RequestContextMiddleware, configure_logging, log_event, metrics
+from app.services.agent import run_agent_flow
 
 
 configure_logging()
@@ -129,10 +130,20 @@ def incident_detail(request: Request, incident_id: str, db: DataAccess = Depends
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
     timeline = db.list_audit_for_entity(incident_id)
+    notes = db.list_incident_notes(incident_id)
+    triage_note = next((n for n in notes if n["note_type"] == "triage"), None)
+    remediation_cards = db.list_agent_cards_for_incident(incident_id)
     return templates.TemplateResponse(
         request,
         "incident_detail.html",
-        {"request": request, "incident": incident, "timeline": timeline, "app_name": get_settings().app_name},
+        {
+            "request": request,
+            "incident": incident,
+            "timeline": timeline,
+            "triage_note": triage_note,
+            "remediation_cards": remediation_cards,
+            "app_name": get_settings().app_name,
+        },
     )
 
 
@@ -183,9 +194,35 @@ def metrics_endpoint(db: DataAccess = Depends(get_data_access)):
             f"opsboard_entities_total{{table=\"alerts\"}} {counts['alerts']}",
             f"opsboard_entities_total{{table=\"incidents\"}} {counts['incidents']}",
             f"opsboard_entities_total{{table=\"audit_events\"}} {counts['audit_events']}",
+            f"opsboard_entities_total{{table=\"incident_notes\"}} {counts['incident_notes']}",
         ]
     )
     return PlainTextResponse(body + "\n")
+
+
+@app.post("/api/agent/run")
+def agent_run_api(
+    request: Request,
+    incident_id: str,
+    mode: str = "both",
+    db: DataAccess = Depends(get_data_access),
+):
+    if mode not in {"triage", "plan", "both"}:
+        raise HTTPException(status_code=400, detail="mode must be triage, plan, or both")
+    try:
+        result = run_agent_flow(db, incident_id=incident_id, mode=mode)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    log_event(
+        "domain_event",
+        request_id=request.state.request_id,
+        action="agent_ran",
+        incident_id=incident_id,
+        mode=mode,
+        llm_used=result["llm_used"],
+        llm_model=result["llm_model"],
+    )
+    return JSONResponse(result)
 
 
 @app.get("/dr", response_class=HTMLResponse)
