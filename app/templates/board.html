@@ -1,11 +1,178 @@
 {% extends "base.html" %}
 {% block title %}Board | {{ app_name }}{% endblock %}
 {% block page_title %}Board{% endblock %}
-{% block page_subtitle %}Operational kanban for tasks, incidents, and remediation execution states.{% endblock %}
+{% block page_actions %}
+<button type="button" class="button button-primary" onclick="document.getElementById('new-card-modal').showModal()">+ New card</button>
+<a class="button button-ghost" href="/board?view={{ request.query_params.get('view', 'list') }}">Refresh</a>
+{% endblock %}
+{% block page_tabs %}
+{% set current_view = request.query_params.get('view', 'list') %}
+<nav class="tabs" aria-label="View switch">
+  <a class="tab-link {% if current_view == 'board' %}is-active{% endif %}" href="/board?view=board">Board</a>
+  <a class="tab-link {% if current_view == 'list' %}is-active{% endif %}" href="/board?view=list">List</a>
+  <a class="tab-link {% if current_view == 'timeline' %}is-active{% endif %}" href="/board?view=timeline">Timeline</a>
+</nav>
+{% endblock %}
 {% block content %}
+{% set current_view = request.query_params.get('view', 'list') %}
+
+{% if current_view == 'list' %}
 <section class="panel">
-  <h2>Create Card</h2>
-  <form method="post" action="/cards">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Status</th>
+          <th>Name</th>
+          <th>Severity</th>
+          <th>Source</th>
+          <th>Started at</th>
+          <th>Duration</th>
+          <th>Assigned to</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for column_name in ["Todo", "In Progress", "Done", "Remediation"] %}
+        {% for card in columns.get(column_name, []) %}
+        {% set card_text = (card.title ~ " " ~ (card.description or ""))|lower %}
+        {% set severity = "low" %}
+        {% if "critical" in card_text %}
+          {% set severity = "critical" %}
+        {% elif "high" in card_text %}
+          {% set severity = "high" %}
+        {% elif "medium" in card_text %}
+          {% set severity = "medium" %}
+        {% endif %}
+        {% set source = "AI" if "auto-generated remediation" in (card.description or "")|lower else "manual" %}
+        {% set status = "ongoing" %}
+        {% if column_name == "Done" %}
+          {% set status = "resolved" %}
+        {% elif column_name == "In Progress" or column_name == "Remediation" %}
+          {% set status = "acknowledged" %}
+        {% endif %}
+        <tr>
+          <td>
+            <span class="status-wrap status-{{ status }}">
+              <span class="status-dot-mini status-{{ status }}"></span>
+              <span class="status-text">{{ status }}</span>
+            </span>
+          </td>
+          <td>
+            <strong class="row-title">{{ card.title }}</strong>
+            <span class="row-id mono">#{{ card.id[:6] }}</span>
+          </td>
+          <td>{{ severity }}</td>
+          <td>{{ source }}</td>
+          <td class="mono">{{ card.created_at }}</td>
+          <td>-</td>
+          <td>Unassigned</td>
+        </tr>
+        {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% elif current_view == 'timeline' %}
+<section class="panel">
+  <ul class="timeline">
+    {% for column_name in ["Todo", "In Progress", "Done", "Remediation"] %}
+    {% for card in columns.get(column_name, []) %}
+    <li class="timeline-item">
+      <div class="timeline-head">
+        <strong>{{ card.title }}</strong>
+        <span class="muted">{{ column_name }}</span>
+      </div>
+      <p class="muted mono">{{ card.created_at }}</p>
+      {% if card.description %}
+      <p class="muted">{{ card.description }}</p>
+      {% endif %}
+    </li>
+    {% endfor %}
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<section class="kanban-grid">
+  {% for column_name in ["Todo", "In Progress", "Done", "Remediation"] %}
+  {% set items = columns.get(column_name, []) %}
+  <article>
+    <div class="column-head">
+      <h3>{{ column_name }}</h3>
+      <span class="column-count">{{ items|length }}</span>
+    </div>
+    <div class="column-stack">
+      {% for card in items %}
+      {% set card_text = (card.title ~ " " ~ (card.description or ""))|lower %}
+      {% set severity = "low" %}
+      {% if "critical" in card_text %}
+        {% set severity = "critical" %}
+      {% elif "high" in card_text %}
+        {% set severity = "high" %}
+      {% elif "medium" in card_text %}
+        {% set severity = "medium" %}
+      {% endif %}
+      {% set ai_generated = "auto-generated remediation" in (card.description or "")|lower %}
+      {% set status = "ongoing" %}
+      {% if column_name == "Done" %}
+        {% set status = "resolved" %}
+      {% elif column_name == "In Progress" or column_name == "Remediation" %}
+        {% set status = "acknowledged" %}
+      {% endif %}
+      <div class="task-card status-card-{{ status }}">
+        <div class="task-head">
+          <strong>{{ card.title }}</strong>
+          <details class="card-menu">
+            <summary aria-label="Card actions"><i data-lucide="more-horizontal"></i></summary>
+            <form method="post" action="/cards/{{ card.id }}/delete">
+              <button type="submit" class="button button-danger button-sm">Delete</button>
+            </form>
+          </details>
+        </div>
+        <div class="meta-row">
+          {% if ai_generated %}
+          <span class="ai-mark" title="AI generated">✨</span>
+          {% endif %}
+          <span class="severity-dot severity-{{ severity }}"></span>
+          <span class="meta-label">{{ status }}</span>
+          <span class="mono card-time" data-time="{{ card.created_at }}">now</span>
+          <span class="mono id-line">#{{ card.id[:6] }}</span>
+        </div>
+        {% if card.description %}
+        <p class="card-preview">{{ card.description }}</p>
+        {% endif %}
+        <div class="card-actions">
+          <details class="status-popover">
+            <summary class="status-pill status-{{ status }}">
+              <span class="status-dot-mini status-{{ status }}"></span>{{ status }}
+            </summary>
+            <div class="status-options">
+              <form method="post" action="/cards/{{ card.id }}/move"><input type="hidden" name="column_name" value="Todo"><button type="submit" class="button button-sm button-ghost">Todo</button></form>
+              <form method="post" action="/cards/{{ card.id }}/move"><input type="hidden" name="column_name" value="In Progress"><button type="submit" class="button button-sm button-ghost">In Progress</button></form>
+              <form method="post" action="/cards/{{ card.id }}/move"><input type="hidden" name="column_name" value="Done"><button type="submit" class="button button-sm button-ghost">Done</button></form>
+              <form method="post" action="/cards/{{ card.id }}/move"><input type="hidden" name="column_name" value="Remediation"><button type="submit" class="button button-sm button-ghost">Remediation</button></form>
+            </div>
+          </details>
+        </div>
+      </div>
+      {% else %}
+      <div class="task-card task-card-placeholder empty-state">
+        <i data-lucide="{% if column_name == 'Done' %}check-circle{% else %}inbox{% endif %}"></i>
+        <p class="empty-state-text">No items yet</p>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endif %}
+
+<dialog id="new-card-modal" class="modal">
+  <form method="dialog" class="modal-close-row">
+    <button class="button button-ghost button-sm" aria-label="Close">Close</button>
+  </form>
+  <h3>New card</h3>
+  <form method="post" action="/cards" class="modal-form">
     <label>
       Title
       <input type="text" name="title" placeholder="Card title" required>
@@ -23,46 +190,33 @@
         <option>Remediation</option>
       </select>
     </label>
-    <button type="submit" class="button button-primary">Add card</button>
+    <button type="submit" class="button button-primary">Create card</button>
   </form>
-</section>
-
-<section class="kanban-grid">
-  {% for column_name in ["Todo", "In Progress", "Done", "Remediation"] %}
-  {% set items = columns.get(column_name, []) %}
-  <article class="kanban-column">
-    <div class="column-head">
-      <h3>{{ column_name }}</h3>
-      <span class="badge status-neutral">{{ items|length }}</span>
-    </div>
-    {% for card in items %}
-    <div class="task-card">
-      <div class="task-head">
-        <strong>{{ card.title }}</strong>
-        <span class="mono muted">{{ card.id }}</span>
-      </div>
-      {% if card.description %}
-      <p>{{ card.description }}</p>
-      {% endif %}
-      <div class="card-actions">
-        <form class="inline-form" method="post" action="/cards/{{ card.id }}/move">
-          <select name="column_name">
-            <option {% if column_name == "Todo" %}selected{% endif %}>Todo</option>
-            <option {% if column_name == "In Progress" %}selected{% endif %}>In Progress</option>
-            <option {% if column_name == "Done" %}selected{% endif %}>Done</option>
-            <option {% if column_name == "Remediation" %}selected{% endif %}>Remediation</option>
-          </select>
-          <button type="submit" class="button button-ghost button-sm">Move</button>
-        </form>
-        <form class="inline-form" method="post" action="/cards/{{ card.id }}/delete">
-          <button type="submit" class="button button-danger button-sm">Delete</button>
-        </form>
-      </div>
-    </div>
-    {% else %}
-    <p class="muted">No cards</p>
-    {% endfor %}
-  </article>
-  {% endfor %}
-</section>
+</dialog>
+<script>
+(() => {
+  const items = document.querySelectorAll(".card-time[data-time]");
+  const now = Date.now();
+  items.forEach((el) => {
+    const raw = el.getAttribute("data-time");
+    const ts = Date.parse(raw || "");
+    if (Number.isNaN(ts)) {
+      el.textContent = "";
+      return;
+    }
+    const deltaMin = Math.max(1, Math.floor((now - ts) / 60000));
+    if (deltaMin < 60) {
+      el.textContent = `${deltaMin}m ago`;
+      return;
+    }
+    const deltaHr = Math.floor(deltaMin / 60);
+    if (deltaHr < 24) {
+      el.textContent = `${deltaHr}h ago`;
+      return;
+    }
+    const deltaDay = Math.floor(deltaHr / 24);
+    el.textContent = `${deltaDay}d ago`;
+  });
+})();
+</script>
 {% endblock %}

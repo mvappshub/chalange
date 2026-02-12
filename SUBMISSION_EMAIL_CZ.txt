@@ -5,10 +5,34 @@ Dobrý den,
 zasílám odevzdání challenge "Able to compete".
 
 - Projekt: OpsBoard MVP (FastAPI + Supabase + Vercel target)
-- Repo: [doplnit URL repozitáře]
-- Deployment URL (Vercel): [doplnit URL]
-- Demo video: `video/out/demo.mp4` (nebo render skript + storyboard v `video/`)
-- Onepager: `ONEPAGER_CZ.md`
+- Repo: [DOPLNIT_REPO_URL]
+- Deployment URL (Vercel): [DOPLNIT_VERCEL_URL]
+- Demo video: [DOPLNIT_VIDEO_URL_NEBO_CESTU]
+- Onepager: [DOPLNIT_ONEPAGER_LINK_NEBO_INFO]
+
+AI proof:
+- API call:
+  `curl -X POST "https://chalange-three.vercel.app/api/agent/run?incident_id=<INCIDENT_ID>&mode=both"`
+- V odpovědi potvrzeno:
+  - `llm_used=true`
+  - `llm_model=gemini-3-flash-preview`
+  - `thinking_level=minimal`
+  - `task_ids`
+- Přiložené důkazy:
+  - screenshot terminálu (curl + JSON odpověď)
+  - screenshot `/audit` -> `agent_ran` -> `View JSON` s `llm_used=true`
+
+Fallback note (Vercel dashboard):
+- V případě dočasného problému s přihlášením do Vercel dashboardu je funkčnost ověřena přes veřejnou deployment URL a API/audit důkazy.
+- Dashboard tedy není blokující podmínka pro validaci AI-powered flow.
+
+Links template:
+- Repo: [DOPLNIT_REPO_URL]
+- Vercel: [DOPLNIT_VERCEL_URL]
+- Video: [DOPLNIT_VIDEO_URL]
+- Onepager: [DOPLNIT_ONEPAGER_URL]
+- AI proof screenshot 1 (terminal): [DOPLNIT]
+- AI proof screenshot 2 (audit): [DOPLNIT]
 
 S pozdravem
 [jméno]

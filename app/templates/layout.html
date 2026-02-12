@@ -6,30 +6,34 @@
   <title>{% block title %}{{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="container topbar-inner">
-      <a class="brand" href="/board">{{ app_name }}</a>
-      <nav class="top-nav" aria-label="Primary">
-        <a class="nav-link {% if request.url.path.startswith('/board') %}is-active{% endif %}" href="/board">Board</a>
-        <a class="nav-link {% if request.url.path.startswith('/alerts') %}is-active{% endif %}" href="/alerts">Alerts</a>
-        <a class="nav-link {% if request.url.path.startswith('/incidents') %}is-active{% endif %}" href="/incidents">Incidents</a>
-        <a class="nav-link {% if request.url.path.startswith('/audit') %}is-active{% endif %}" href="/audit">Audit</a>
-        <a class="nav-link {% if request.url.path.startswith('/monitoring') %}is-active{% endif %}" href="/monitoring">Monitoring</a>
-        <a class="nav-link {% if request.url.path.startswith('/dr') %}is-active{% endif %}" href="/dr">DR</a>
-        <a class="nav-link {% if request.url.path.startswith('/metrics') %}is-active{% endif %}" href="/metrics">Metrics</a>
+  <div class="app-layout">
+    <aside class="side-rail" aria-label="Primary Navigation">
+      <a class="brand logo" href="/board"><span>Ops</span>Board</a>
+      <nav class="rail-nav">
+        <a class="nav-link {% if request.url.path.startswith('/board') %}is-active{% endif %}" href="/board"><i data-lucide="kanban-square"></i><span>Board</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/alerts') %}is-active{% endif %}" href="/alerts"><i data-lucide="siren"></i><span>Alerts</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/incidents') %}is-active{% endif %}" href="/incidents"><i data-lucide="shield-alert"></i><span>Incidents</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/audit') %}is-active{% endif %}" href="/audit"><i data-lucide="file-clock"></i><span>Audit</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/monitoring') %}is-active{% endif %}" href="/monitoring"><i data-lucide="activity"></i><span>Monitoring</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/dr') %}is-active{% endif %}" href="/dr"><i data-lucide="database-backup"></i><span>DR</span></a>
+        <a class="nav-link {% if request.url.path.startswith('/metrics') %}is-active{% endif %}" href="/metrics"><i data-lucide="bar-chart-3"></i><span>Metrics</span></a>
       </nav>
-    </div>
-  </header>
+    </aside>
 
-  <main class="container main-shell">
-    <header class="page-header">
-      <p class="eyebrow">OpsBoard Control Plane</p>
-      <h1>{% block page_title %}{{ app_name }}{% endblock %}</h1>
-      <p class="subtitle">{% block page_subtitle %}Real-time incident response and operational visibility.{% endblock %}</p>
-    </header>
-    {% block content %}{% endblock %}
-  </main>
+    <main class="main-area">
+      <div class="main-shell">
+        <header class="page-header">
+          <h1>{% block page_title %}{{ app_name }}{% endblock %}</h1>
+          <div class="page-actions">{% block page_actions %}{% endblock %}</div>
+        </header>
+        {% block page_tabs %}{% endblock %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
