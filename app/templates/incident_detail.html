@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>{{ incident.title }}</h2>
+  <p><strong>Status:</strong> {{ incident.status }} | <strong>Severity:</strong> {{ incident.severity }}</p>
+  <p>{{ incident.summary }}</p>
+  <form method="post" action="/incidents/{{ incident.id }}/status">
+    <select name="status">
+      <option value="investigating">investigating</option>
+      <option value="mitigated">mitigated</option>
+      <option value="resolved">resolved</option>
+    </select>
+    <button type="submit">Update status</button>
+  </form>
+</section>
+<section class="panel">
+  <h3>Timeline (audit)</h3>
+  <ul>
+    {% for event in timeline %}
+    <li>{{ event.created_at }} | {{ event.action }} | {{ event.payload }}</li>
+    {% else %}
+    <li>No events</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

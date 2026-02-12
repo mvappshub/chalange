@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Disaster recovery (application level)</h2>
+  <p>Export/import board, alerts, incidents and audit events as JSON.</p>
+  <a class="button" href="/dr/export">Export JSON backup</a>
+</section>
+<section class="panel">
+  <h3>Restore</h3>
+  <form method="post" action="/dr/import" enctype="multipart/form-data">
+    <input type="file" name="file" accept="application/json" required>
+    <button type="submit">Import backup</button>
+  </form>
+</section>
+{% endblock %}

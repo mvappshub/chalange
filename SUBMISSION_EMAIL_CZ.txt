@@ -1,0 +1,14 @@
+Předmět: Able to compete - OpsBoard MVP
+
+Dobrý den,
+
+zasílám odevzdání challenge "Able to compete".
+
+- Projekt: OpsBoard MVP (FastAPI + Supabase + Vercel target)
+- Repo: [doplnit URL repozitáře]
+- Deployment URL (Vercel): [doplnit URL]
+- Demo video: `video/out/demo.mp4` (nebo render skript + storyboard v `video/`)
+- Onepager: `ONEPAGER_CZ.md`
+
+S pozdravem
+[jméno]

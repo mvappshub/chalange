@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Entity counts</h2>
+  <ul>
+    <li>Cards: {{ counts.cards }}</li>
+    <li>Alerts: {{ counts.alerts }}</li>
+    <li>Incidents: {{ counts.incidents }}</li>
+    <li>Audit events: {{ counts.audit_events }}</li>
+  </ul>
+</section>
+<section class="panel">
+  <h2>HTTP metrics</h2>
+  <ul>
+    <li>Total requests: {{ metrics.requests_total }}</li>
+    <li>Average latency (ms): {{ "%.2f"|format(metrics.request_latency_ms_avg) }}</li>
+  </ul>
+  <p>Raw metrics at <a href="/metrics">/metrics</a></p>
+</section>
+{% endblock %}

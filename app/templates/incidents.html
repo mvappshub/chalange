@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Incidents</h2>
+  <table>
+    <thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>Created</th></tr></thead>
+    <tbody>
+      {% for incident in incidents %}
+      <tr>
+        <td><a href="/incidents/{{ incident.id }}">{{ incident.title }}</a></td>
+        <td>{{ incident.severity }}</td>
+        <td>{{ incident.status }}</td>
+        <td>{{ incident.created_at }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No incidents yet</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

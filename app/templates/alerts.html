@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Create alert</h2>
+  <form method="post" action="/alerts">
+    <input type="text" name="title" placeholder="Alert title" required>
+    <select name="severity">
+      <option value="low">low</option>
+      <option value="medium">medium</option>
+      <option value="high">high</option>
+      <option value="critical">critical</option>
+    </select>
+    <input type="text" name="source" value="manual">
+    <button type="submit">Create alert</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Watcher</h2>
+  <form method="post" action="/watcher/run-once">
+    <button type="submit">Run escalation once</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>Alerts</h2>
+  <table>
+    <thead><tr><th>Title</th><th>Severity</th><th>Status</th><th>Escalated</th></tr></thead>
+    <tbody>
+    {% for alert in alerts %}
+    <tr>
+      <td>{{ alert.title }}</td>
+      <td>{{ alert.severity }}</td>
+      <td>{{ alert.status }}</td>
+      <td>{{ alert.escalated }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4">No alerts yet</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

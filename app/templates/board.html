@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h2>Create card</h2>
+  <form method="post" action="/cards">
+    <input type="text" name="title" placeholder="Card title" required>
+    <input type="text" name="description" placeholder="Description">
+    <select name="column_name">
+      <option>Todo</option>
+      <option>In Progress</option>
+      <option>Done</option>
+    </select>
+    <button type="submit">Add card</button>
+  </form>
+</section>
+
+<section class="columns">
+  {% for column_name, items in columns.items() %}
+  <article class="column">
+    <h3>{{ column_name }}</h3>
+    {% for card in items %}
+    <div class="card">
+      <strong>{{ card.title }}</strong>
+      <p>{{ card.description }}</p>
+      <form method="post" action="/cards/{{ card.id }}/move">
+        <select name="column_name">
+          <option {% if column_name == "Todo" %}selected{% endif %}>Todo</option>
+          <option {% if column_name == "In Progress" %}selected{% endif %}>In Progress</option>
+          <option {% if column_name == "Done" %}selected{% endif %}>Done</option>
+        </select>
+        <button type="submit">Move</button>
+      </form>
+      <form method="post" action="/cards/{{ card.id }}/delete">
+        <button type="submit" class="danger">Delete</button>
+      </form>
+    </div>
+    {% else %}
+    <p class="muted">No cards</p>
+    {% endfor %}
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

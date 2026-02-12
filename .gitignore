@@ -1,2 +1,11 @@
 .agents\skills
 .snapshots
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+video/out/
+
+.vercel
+opsboard.egg-info/
